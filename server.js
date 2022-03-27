@@ -14,3 +14,11 @@ app.use(routes);
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}!`);
 });
+
+/**
+ * TODO:  Go through and create documentation for all functions
+ * TODO:  Deploy the project
+ * TODO:  Go through and Create the video
+ * TODO:  Create the README
+ * TODO:  Submit the project.
+ */

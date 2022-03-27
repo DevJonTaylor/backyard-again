@@ -1,13 +1,10 @@
-
-const Product = require('./Product');
-const Category = require('./Category');
-const Tag = require('./Tag');
-const ProductTag = require('./ProductTag');
-
-Product.belongsTo(Category)
-Category.hasMany(Product)
-Product.belongsToMany(Tag, { through: 'ProductTag' })
-Tag.belongsToMany(Product, { through: 'ProductTag' })
+const Product = require('./Product')
+const Category = require('./Category')
+const Tag = require('./Tag')
+const ProductTag = require('./ProductTag')
+Product.associate({ Category, Tag })
+Category.associate({ Product })
+Tag.associate({ Product })
 
 module.exports = {
   Product,
