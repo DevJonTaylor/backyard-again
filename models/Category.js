@@ -1,8 +1,22 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes } = require('sequelize')
+const sequelize = require('../config/connection.js')
 
-const sequelize = require('../config/connection.js');
+class Category extends Model {
 
-class Category extends Model {}
+  static include = {}
+
+  static associate({ Product }) {
+    this.hasMany(Product, {foreignKey: 'category_id'})
+    this.include = {include: { model: Product }}
+  }
+
+  static all() {
+    return this.findAll({ ...this.include })
+  }
+  static byId(id) {
+    return this.findOne({where: { id }, ...this.include })
+  }
+}
 
 Category.init(
   {
@@ -22,7 +36,8 @@ Category.init(
     timestamps: false,
     freezeTableName: true,
     underscored: true,
-    modelName: 'category',
+    tableName: 'category',
+    modelName: 'Category',
   }
 );
 

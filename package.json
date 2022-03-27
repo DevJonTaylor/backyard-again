@@ -5,9 +5,10 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "watch": "nodemon server.js",
-    "seed": "node --trace-warnings seeds/index.js"
+    "start": "node --trace-warnings server",
+    "watch": "nodemon --trace-warnings server",
+    "seed": "node --trace-warnings seeds",
+    "reset:seed": "mysql -u root -p < db/schema.sql && node --trace-warnings seeds"
   },
   "repository": {
     "type": "git",

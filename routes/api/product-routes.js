@@ -1,96 +1,105 @@
 const router = require('express').Router();
-const { Product, Category, Tag, ProductTag } = require('../../models');
+const { Product, ProductTag } = require('../../models');
 
-// The `/api/products` endpoint
+function checkId(req, res, next) {
+  if(req.params.id === '0') return res.badRequest('Invalid Product Id')
+  if(isNaN(req.params.id)) return res.badRequest('Invalid Product Id')
 
-// get all products
-router.get('/', (req, res) => {
-  // find all products
-  // be sure to include its associated Category and Tag data
-});
+  return next()
+}
 
-// get one product
-router.get('/:id', (req, res) => {
-  // find a single product by its `id`
-  // be sure to include its associated Category and Tag data
-});
+function checkBody(req, res, next) {
+  if(!req.body.product_name) return res.badRequest('Missing Product Columns')
+  if(!req.body.price) return res.badRequest('Missing Product Columns')
+  if(!req.body.stock) return res.badRequest('Missing Product Columns')
+  next()
+}
 
-// create new product
-router.post('/', (req, res) => {
-  /* req.body should look like this...
-    {
-      product_name: "Basketball",
-      price: 200.00,
-      stock: 3,
-      tagIds: [1, 2, 3, 4]
-    }
-  */
-  Product.create(req.body)
-    .then((product) => {
-      // if there's product tags, we need to create pairings to bulk create in the ProductTag model
-      if (req.body.tagIds.length) {
-        const productTagIdArr = req.body.tagIds.map((tag_id) => {
-          return {
-            product_id: product.id,
-            tag_id,
-          };
-        });
-        return ProductTag.bulkCreate(productTagIdArr);
-      }
-      // if no product tags, just respond
-      res.status(200).json(product);
-    })
-    .then((productTagIds) => res.status(200).json(productTagIds))
-    .catch((err) => {
-      console.log(err);
-      res.status(400).json(err);
-    });
-});
+function handleError(err, res) {
+  switch(err.original.code) {
+    case 'ER_NO_REFERENCED_ROW_2':
+      return res.badRequest('Invalid Category ID')
+    default:
+      console.error(err)
+      return res.serverError()
+  }
+}
 
-// update product
-router.put('/:id', (req, res) => {
-  // update product data
-  Product.update(req.body, {
-    where: {
-      id: req.params.id,
-    },
-  })
-    .then((product) => {
-      // find all associated tags from ProductTag
-      return ProductTag.findAll({ where: { product_id: req.params.id } });
-    })
-    .then((productTags) => {
-      // get list of current tag_ids
-      const productTagIds = productTags.map(({ tag_id }) => tag_id);
-      // create filtered list of new tag_ids
-      const newProductTags = req.body.tagIds
-        .filter((tag_id) => !productTagIds.includes(tag_id))
-        .map((tag_id) => {
-          return {
-            product_id: req.params.id,
-            tag_id,
-          };
-        });
-      // figure out which ones to remove
-      const productTagsToRemove = productTags
-        .filter(({ tag_id }) => !req.body.tagIds.includes(tag_id))
-        .map(({ id }) => id);
+async function handleAllRequest(req, res) {
+  try {
+    return res.ok(await Product.all())
+  } catch(err) {
+    console.error(err)
+    return handleError(err, res)
+  }
+}
 
-      // run both actions
-      return Promise.all([
-        ProductTag.destroy({ where: { id: productTagsToRemove } }),
-        ProductTag.bulkCreate(newProductTags),
-      ]);
-    })
-    .then((updatedProductTags) => res.json(updatedProductTags))
-    .catch((err) => {
-      // console.log(err);
-      res.status(400).json(err);
-    });
-});
+async function handleOneRequest(req, res) {
+  try {
+    const cat = await Product.byId(req.params.id)
 
-router.delete('/:id', (req, res) => {
-  // delete one product by its `id` value
-});
+    return !cat ? res.notFound() : res.ok(cat)
+
+  } catch(err) {
+    handleError((err, res))
+  }
+}
+
+async function handleCreateRequest(req, res) {
+  try {
+    const newProduct = await Product.create(req.body)
+
+    if(req.body.tagIds)
+      await ProductTag.addTagsToProduct(newProduct.id, req.body.tagIds)
+
+    res.ok(await Product.byId(newProduct.id))
+  } catch(err) {
+    return handleError(err, res)
+  }
+}
+
+async function handleUpdateRequest(req, res) {
+  try {
+    const { id } = req.params
+    const where = { id }
+    const individualHooks = true
+
+    const updatedCat = await Product.update(req.body, { where, individualHooks })
+
+    if(!updatedCat[1].length) return res.notFound()
+
+    if(req.body.tagIds)
+      return res.ok(await ProductTag.deleteByProductId(id)
+        .then(() => ProductTag.addTagsToProduct(id, req.body.tagIds))
+        .then(() => Product.byId(id)))
+
+    else return res.ok(updatedCat[1])
+  } catch(err) {
+    return handleError(err, res)
+  }
+}
+
+async function handleDeleteRequest(req, res) {
+  try {
+    await ProductTag.deleteByProductId(req.params.id)
+    const results = await Product.destroy({ where: { id: req.params.id } })
+    return !results
+      ? res.notFound()
+      : res.ok()
+  } catch(err) {
+    console.error(err)
+    res.serverError()
+  }
+}
+
+router.get('/', handleAllRequest)
+
+router.get('/:id', checkId, handleOneRequest)
+
+router.post('/', checkBody, handleCreateRequest)
+
+router.put('/:id', checkId, handleUpdateRequest)
+
+router.delete('/:id', checkId, handleDeleteRequest)
 
 module.exports = router;
