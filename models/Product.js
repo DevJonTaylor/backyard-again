@@ -2,7 +2,17 @@ const { Model, DataTypes } = require('sequelize')
 const sequelize = require('../config/connection')
 
 class Product extends Model {
+  /**
+   * Initialized here and defined at the end of associate method.
+   * @type { {} | { include: [ { modal: Category }, { modal: Tag } ]  } }
+   */
+  static include = {}
 
+  /**
+   * Defining the relationship between the Category and Tag models.
+   * @param { Category } Category
+   * @param { Tag } Tag
+   */
   static associate({ Category, Tag }) {
     this.belongsTo(Category, { foreignKey: 'category_id' })
     this.belongsToMany(Tag, { through: 'ProductTag', foreignKey: 'product_id' })
@@ -10,12 +20,19 @@ class Product extends Model {
     this.include = { include: [ { model: Category }, { model: Tag } ] }
   }
 
-  static include = {}
-
+  /**
+   * Returns the entire collection of Products.
+   * @returns {Promise<Array<Product>>}
+   */
   static all() {
     return this.findAll({ ...this.include })
   }
 
+  /**
+   * Returns a single Product if it exists.
+   * @param { number } id
+   * @returns { Promise<Product> }
+   */
   static byId(id) {
     return this.findOne({ where: { id }, ...this.include })
   }
