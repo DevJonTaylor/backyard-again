@@ -1,105 +1,41 @@
 const router = require('express').Router();
-const { Product, ProductTag } = require('../../models');
+const { Product, ProductTag, Category, Tag } = require('../../models');
+const { BasicRoutes, checkId } = require("../../middleware");
 
-function checkId(req, res, next) {
-  if(req.params.id === '0') return res.badRequest('Invalid Product Id')
-  if(isNaN(req.params.id)) return res.badRequest('Invalid Product Id')
+const options = { include: [{ model: Category }, { model: Tag } ] , nest: true, logging: false }
 
-  return next()
-}
+const br = new BasicRoutes()
+br.setCheckId(checkId('Invalid Product Id'))
+  .setAllQuery(() => {
+    return Product.findAll(options)
+  })
+  .setByIdQuery((id) => {
+    return Product.findByPk(id, options)
+  })
+  .setCreateQuery(async (createObject) => {
+    if(createObject.Tags) {
+      const newProduct = await Product.create(createObject, { logging: false })
+      for(const tag of createObject.Tags) {
+        await ProductTag.create({ product_id: newProduct.id, tag_id: tag }, { logging: false })
+      }
 
-function checkBody(req, res, next) {
-  if(!req.body.product_name) return res.badRequest('Missing Product Columns')
-  if(!req.body.price) return res.badRequest('Missing Product Columns')
-  if(!req.body.stock) return res.badRequest('Missing Product Columns')
-  next()
-}
-
-function handleError(err, res) {
-  switch(err.original.code) {
-    case 'ER_NO_REFERENCED_ROW_2':
-      return res.badRequest('Invalid Category ID')
-    default:
-      console.error(err)
-      return res.serverError()
-  }
-}
-
-async function handleAllRequest(req, res) {
-  try {
-    return res.ok(await Product.all())
-  } catch(err) {
-    console.error(err)
-    return handleError(err, res)
-  }
-}
-
-async function handleOneRequest(req, res) {
-  try {
-    const cat = await Product.byId(req.params.id)
-
-    return !cat ? res.notFound() : res.ok(cat)
-
-  } catch(err) {
-    handleError((err, res))
-  }
-}
-
-async function handleCreateRequest(req, res) {
-  try {
-    const newProduct = await Product.create(req.body)
-
-    if(req.body.tagIds)
-      await ProductTag.addTagsToProduct(newProduct.id, req.body.tagIds)
-
-    res.ok(await Product.byId(newProduct.id))
-  } catch(err) {
-    return handleError(err, res)
-  }
-}
-
-async function handleUpdateRequest(req, res) {
-  try {
-    const { id } = req.params
-    const where = { id }
-    const individualHooks = true
-
-    const updatedCat = await Product.update(req.body, { where, individualHooks })
-
-    if(!updatedCat[1].length) return res.notFound()
-
-    if(req.body.tagIds)
-      return res.ok(await ProductTag.deleteByProductId(id)
-        .then(() => ProductTag.addTagsToProduct(id, req.body.tagIds))
-        .then(() => Product.byId(id)))
-
-    else return res.ok(updatedCat[1])
-  } catch(err) {
-    return handleError(err, res)
-  }
-}
-
-async function handleDeleteRequest(req, res) {
-  try {
-    await ProductTag.deleteByProductId(req.params.id)
-    const results = await Product.destroy({ where: { id: req.params.id } })
-    return !results
-      ? res.notFound()
-      : res.ok()
-  } catch(err) {
-    console.error(err)
-    res.serverError()
-  }
-}
-
-router.get('/', handleAllRequest)
-
-router.get('/:id', checkId, handleOneRequest)
-
-router.post('/', checkBody, handleCreateRequest)
-
-router.put('/:id', checkId, handleUpdateRequest)
-
-router.delete('/:id', checkId, handleDeleteRequest)
+      return Product.findByPk(newProduct.id, options)
+    }
+    const newProduct = await Product.create(createObject)
+    return Product.findByPk(newProduct.id, options)
+  })
+  .setUpdateQuery(async (updateObject, id) => {
+    if(updateObject.Tags) {
+      await ProductTag.deleteByProductId(id)
+      for(const tag_id of updateObject.Tags) {
+        await ProductTag.create({ tag_id, product_id: id }, { logging: false })
+      }
+    }
+    return Product.update(updateObject, { individualHooks: true, where: { id }, logging: false })
+  })
+  .setDeleteQuery((id) => {
+    return Product.destroy({ where: { id }, logging: false })
+  })
+  .setupRouter(router)
 
 module.exports = router;

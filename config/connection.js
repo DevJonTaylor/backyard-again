@@ -1,9 +1,5 @@
 require('dotenv').config();
-
 const Sequelize = require('sequelize');
-global.__M = Sequelize.Model
-global._STRING = Sequelize.STRING
-global._INT = Sequelize.INTEGER
 
 const sequelize = process.env.JAWSDB_URL
   ? new Sequelize(process.env.JAWSDB_URL)
