@@ -1,25 +1,7 @@
 const { Model, DataTypes } = require('sequelize')
 const sequelize = require('../config/connection')
 
-class Product extends Model {
-
-  static associate({ Category, Tag }) {
-    this.belongsTo(Category, { foreignKey: 'category_id' })
-    this.belongsToMany(Tag, { through: 'ProductTag', foreignKey: 'product_id' })
-
-    this.include = { include: [ { model: Category }, { model: Tag } ] }
-  }
-
-  static include = {}
-
-  static all() {
-    return this.findAll({ ...this.include })
-  }
-
-  static byId(id) {
-    return this.findOne({ where: { id }, ...this.include })
-  }
-}
+class Product extends Model {}
 
 Product.init(
   {
@@ -30,7 +12,7 @@ Product.init(
       autoIncrement: true
     },
     product_name: {
-      type: _STRING,
+      type: DataTypes.STRING,
       allowNull: false
     },
     price: {

@@ -1,85 +1,26 @@
 const router = require('express').Router();
 const { Tag } = require('../../models');
+const { BasicRoutes, checkId } = require("../../middleware");
 
-function checkId(req, res, next) {
-  if(req.params.id === '0') return res.badRequest('Invalid Tag Id')
-  if(isNaN(req.params.id)) return res.badRequest('Invalid Tag Id')
+const options = { nested: true, logging: false }
 
-  return next()
-}
-
-function checkBody(req, res, next) {
-  if(!req.body.tag_name) return res.badRequest('Invalid Tag Column')
-  next()
-}
-
-async function handleAllRequest(req, res) {
-  try {
-    return res.ok(await Tag.all())
-  } catch(err) {
-    console.error(err)
-    return res.serverError()
-  }
-}
-
-async function handleOneRequest(req, res) {
-  try {
-    const tag = await Tag.byId(req.params.id)
-
-    return !tag ? res.notFound() : res.ok(tag)
-
-  } catch(err) {
-    console.error(err)
-    res.serverError()
-  }
-}
-
-async function handleCreateRequest(req, res) {
-  try {
-    res.ok(await Tag.create(req.body))
-  } catch(err) {
-    console.error(err)
-    res.serverError()
-  }
-}
-
-async function handleUpdateRequest(req, res) {
-  try {
-    const { id } = req.params
-    const where = { id }
-    const individualHooks = true
-
-    const updatedTag = await Tag.update(req.body, { where, individualHooks })
-
-    if(!updatedTag[1].length) return res.notFound()
-
-    else return res.ok(updatedTag[1])
-  } catch(err) {
-    console.error(err)
-    return res.serverError()
-  }
-}
-
-async function handleDeleteRequest(req, res) {
-  try {
-    const results = await Tag.destroy({ where: { id: req.params.id } })
-    return !results
-      ? res.notFound()
-      : res.ok()
-  } catch(err) {
-    console.error(err)
-    res.serverError()
-  }
-}
-
-router.get('/', handleAllRequest);
-
-router.get('/:id', checkId, handleOneRequest);
-
-router.post('/', checkBody, handleCreateRequest);
-
-router.put('/:id', checkId, handleUpdateRequest);
-
-router.delete('/:id', checkId, handleDeleteRequest);
+const br = new BasicRoutes()
+br.setCheckId(checkId('Invalid Product Id'))
+  .setAllQuery(() => {
+    return Tag.findAll(options)
+  })
+  .setByIdQuery((id) => {
+    return Tag.findByPk(id, options)
+  })
+  .setCreateQuery(async (createObject) => {
+      return Tag.create(createObject, { logging: false })
+  })
+  .setUpdateQuery(async (updateObject, id) => {
+    return Tag.update(updateObject, { individualHooks: true, where: { id }, logging: false })
+  })
+  .setDeleteQuery((id) => {
+    return Tag.destroy({ where: { id }, logging: false })
+  })
+  .setupRouter(router)
 
 module.exports = router;

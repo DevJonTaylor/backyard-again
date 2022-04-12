@@ -1,22 +1,7 @@
 const { Model, DataTypes } = require('sequelize')
-const sequelize = require('../config/connection.js')
+const sequelize = require('../config/connection')
 
-class Category extends Model {
-
-  static include = {}
-
-  static associate({ Product }) {
-    this.hasMany(Product, {foreignKey: 'category_id'})
-    this.include = {include: { model: Product }}
-  }
-
-  static all() {
-    return this.findAll({ ...this.include })
-  }
-  static byId(id) {
-    return this.findOne({where: { id }, ...this.include })
-  }
-}
+class Category extends Model {}
 
 Category.init(
   {

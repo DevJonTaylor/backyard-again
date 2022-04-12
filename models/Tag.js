@@ -2,24 +2,7 @@ const { Model, DataTypes } = require('sequelize');
 
 const sequelize = require('../config/connection.js');
 
-class Tag extends Model {
-
-  static include = {}
-
-  static associate({ Product }) {
-    this.belongsToMany(Product, { through: 'ProductTag' })
-    this.include = { include: { model: Product } }
-  }
-
-  static all() {
-    return this.findAll({ ...this.include })
-  }
-
-  static byId(id) {
-    return this.findOne({ where: { id }, ...this.include })
-  }
-
-}
+class Tag extends Model {}
 
 Tag.init({
     id: {
