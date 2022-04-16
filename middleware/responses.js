@@ -7,10 +7,9 @@
  * @returns {void|*}
  */
 function returnResponse(code, message, data) {
-  this
-    .header('Content-Type', 'application/vnd.api+json')
+  this.header('Content-Type', 'application/vnd.api+json')
     .status(code)
-    .send(JSON.stringify(!data ? {code, message} : {code, message, data}))
+    .send(JSON.stringify(!data ? { code, message } : { code, message, data }))
 }
 
 /**
@@ -30,9 +29,7 @@ function okResponse(data) {
  * @returns {void|*}
  */
 function badRequestResponse(reason) {
-  return !reason
-    ? this.returnResponse(400, 'Bad Request')
-    : this.returnResponse(400, 'Bad Request', reason)
+  return !reason ? this.returnResponse(400, 'Bad Request') : this.returnResponse(400, 'Bad Request', reason)
 }
 
 /**
@@ -56,7 +53,7 @@ function serverErrorResponse() {
 /**
  * Extending the Response object to allow for consistent response and easily utilized.
  */
-module.exports = function(req, res, next) {
+module.exports = function (req, res, next) {
   res.returnResponse = returnResponse
   res.ok = okResponse
   res.badRequest = badRequestResponse

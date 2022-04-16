@@ -1,14 +1,15 @@
 {
-  "name": "module-13-challenge-orm",
+  "name": "backyard-again",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --trace-warnings server",
-    "watch": "nodemon --trace-warnings server",
-    "seed": "node --trace-warnings seeds",
-    "reset:seed": "mysql -u root -p < db/schema.sql && node --trace-warnings seeds"
+    "start": "node server",
+    "watch": "nodemon server",
+    "seed": "node seeds",
+    "schema": "bash ./db/schema.sh",
+    "schema:seed": "bash ./db/schema.sh && node seeds"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,9 @@
   "author": "Jon Taylor",
   "license": "MIT",
   "devDependencies": {
-    "nodemon": "^2.0.3"
+    "eslint": "^8.13.0",
+    "nodemon": "^2.0.3",
+    "prettier": "^2.6.2"
   },
   "dependencies": {
     "dotenv": "^8.2.0",
