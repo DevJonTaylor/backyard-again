@@ -85,10 +85,10 @@ the tables
 ```bash
 npm run schema:seed
 ```
-[!](./assets/images/schema_seeds.gif)
+![](./assets/images/schema_seeds.gif)
 ### Login
 I exported the Insomnia.json for easy import and quick testing.
-[!](./assets/images/insomnia.png)
+![](./assets/images/insomnia.png)
 
 ## Contact Me
 
