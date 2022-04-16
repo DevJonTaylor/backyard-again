@@ -28,7 +28,9 @@
 This project was neat to create.  I went through and worked with Sequelize
 for the first time.  I utilized ShellScript as part of the setup.  It
 basically creates and installs the back end for an eCommerce.  You can find a  
-walkthrough video [here](https://youtu.be/ZEm7VYBAwn8).
+walk-through video [here](https://youtu.be/ZEm7VYBAwn8).  The idea here was to create a REST API that would 
+emulate an eCommerce API.
+
 ## Roadmap
 
 - [x]  Create a schema file
